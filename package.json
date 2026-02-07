@@ -1,9 +1,8 @@
 {
-  "name": "bypass-api-vercel",
-  "version": "1.0.0",
+  "name": "yanzzbypass",
   "private": true,
   "type": "module",
   "dependencies": {
-    "axios": "^1.6.7"
+    "axios": "^1.6.0"
   }
 }
