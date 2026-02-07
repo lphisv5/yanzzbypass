@@ -5,12 +5,11 @@ export default async function handler(req, res) {
   const { url } = req.query;
 
   if (!url) {
-    return res.status(400).json({ error: 'Missing url parameter' });
+    return res.status(400).json({ error: 'Missing url' });
   }
 
   try {
     const data = await bypassUrl(url);
-    const time = ((Date.now() - start) / 1000).toFixed(3) + 's';
 
     const result =
       data?.result ||
@@ -18,8 +17,10 @@ export default async function handler(req, res) {
       null;
 
     if (!result) {
-      return res.status(502).json({ error: 'INVALID_UPSTREAM_RESPONSE' });
+      return res.status(502).json({ error: 'INVALID_UPSTREAM' });
     }
+
+    const time = ((Date.now() - start) / 1000).toFixed(3) + 's';
 
     res.setHeader('Cache-Control', 'no-store');
 
@@ -27,14 +28,8 @@ export default async function handler(req, res) {
       result,
       time_taken: time
     });
-
   } catch (err) {
-    const code =
-      err.message === 'CIRCUIT_OPEN' ? 503 :
-      err.message === 'URL_REQUIRED' ? 400 :
-      502;
-
-    return res.status(code).json({
+    return res.status(503).json({
       error: err.message
     });
   }
