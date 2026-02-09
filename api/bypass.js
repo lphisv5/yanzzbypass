@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const BASE_URL = 'https://rtao.lol/free/v2';
-const API_KEY = process.env.RTaO_BtBKnXmuZPB0msCHlXyxS09ItC1yARpq;
+const API_KEY = process.env.API_KEY;
 
 const TIMEOUT = 8000;
 const MAX_RETRY = 2;
