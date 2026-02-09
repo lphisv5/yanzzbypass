@@ -1,67 +1,43 @@
-import axios from 'axios';
+import { bypassUrl } from '../lib/rtaoClient.js';
 
-const BASE_URL = 'https://rtao.lol/free/v2';
-const API_KEY = process.env.RTAO_API_KEY;
+export default async function handler(req, res) {
+  const start = Date.now();
 
-const TIMEOUT = 8000;
-const MAX_RETRY = 2;
-const FAIL_LIMIT = 5;
-const COOLDOWN_MS = 60_000;
+  const url = typeof req.query.url === 'string'
+    ? req.query.url.trim()
+    : '';
 
-let failCount = 0;
-let circuitOpenUntil = 0;
-
-const client = axios.create({
-  baseURL: BASE_URL,
-  timeout: TIMEOUT,
-  headers: {
-    'x-api-key': API_KEY,
-    'User-Agent': 'yanz-bypass/1.0'
+  if (!url) {
+    return res.status(400).json({
+      error: 'URL_REQUIRED'
+    });
   }
-});
 
-const isCircuitOpen = () => Date.now() < circuitOpenUntil;
+  const response = await bypassUrl(url);
 
-const recordFail = () => {
-  failCount++;
-  if (failCount >= FAIL_LIMIT) {
-    circuitOpenUntil = Date.now() + COOLDOWN_MS;
-    failCount = 0;
+  if (!response.ok) {
+    return res.status(502).json({
+      error: response.error
+    });
   }
-};
 
-const recordSuccess = () => {
-  failCount = 0;
-};
+  const result =
+    response.data?.result ||
+    response.data?.data?.result ||
+    null;
 
-async function fetchWithRetry(config, retry = 0) {
-  try {
-    const res = await client(config);
-    recordSuccess();
-    return res.data;
-  } catch (err) {
-    if (retry < MAX_RETRY) {
-      return fetchWithRetry(config, retry + 1);
-    }
-    recordFail();
-    throw err;
+  if (!result) {
+    return res.status(502).json({
+      error: 'INVALID_UPSTREAM_RESPONSE'
+    });
   }
-}
 
-export async function getSupported() {
-  if (!API_KEY) throw new Error('API_KEY_MISSING');
-  if (isCircuitOpen()) throw new Error('CIRCUIT_OPEN');
+  const time = ((Date.now() - start) / 1000).toFixed(3) + 's';
 
-  return fetchWithRetry({ url: '/supported' });
-}
+  res.setHeader('Cache-Control', 'no-store');
 
-export async function bypassUrl(url) {
-  if (!API_KEY) throw new Error('API_KEY_MISSING');
-  if (!url) throw new Error('URL_REQUIRED');
-  if (isCircuitOpen()) throw new Error('CIRCUIT_OPEN');
-
-  return fetchWithRetry({
-    url: '/bypass',
-    params: { url }
+  return res.status(200).json({
+    result,
+    time_taken: time
   });
 }
