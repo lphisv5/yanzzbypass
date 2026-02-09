@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   if (!url) {
     return res.status(400).json({
-      error: 'URL_REQUIRED'
+      error: 'URL Required'
     });
   }
 
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
   if (!result) {
     return res.status(502).json({
-      error: 'INVALID_UPSTREAM_RESPONSE'
+      error: 'Invalid Upstream Response'
     });
   }
 
